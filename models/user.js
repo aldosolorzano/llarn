@@ -1,51 +1,43 @@
-'use strict';
-var bcrypt = require('bcrypt-nodejs');
+'use-strict'
+var Promise = require("bluebird"),
+    bcrypt = Promise.promisifyAll(require('bcrypt-nodejs'));
 
 module.exports = function(sequelize, DataTypes) {
   var User = sequelize.define('User', {
     email:{
       type: DataTypes.STRING,
       unique: true,
-      validate: {
-        notNull: true,
-        notEmpty: true
-      }
+      allowNull: true,
+      notEmpty: true
     },
     password:{
       type: DataTypes.STRING,
-      validate: {
-        notNull: true,
-        notEmpty: true
-      }
+      allowNull: true,
+      notEmpty: true
     }
   }, {
     classMethods: {
       associate: function(models) {
         // associations can be defined here
       },
-      validPassword: function(password, passwd, done, user){
-				bcrypt.compare(password, passwd, function(err, isMatch){
-					if (err) console.log(err)
-					if (isMatch) {
-						return done(null, user)
-					} else {
-						return done(null, false)
-					}
-				})
+      validPassword: function(password, passwd){
+				return bcrypt.compareAsync(password, passwd ).then(isMatch => {
+          return isMatch
+        }
+        ).catch(console.error)
 			}
     }
   });
-  User.hook('beforeCreate',function(user, fn){
-    var salt = bcrypt.genSalt(SALT_WORK_FACTOR,function(err,salt){
-      console.log('salt callback')
-      return salt;
-    });
-    bcrypt.hash(user.password, salt, null, function(err, hash){
-      if (err) return next(err);
-      user.password = hash;
-      console.log('hash callback')
-      return fn(null,user)
-    })
-  })
+  User.beforeCreate((user,options,done)=>{
+    bcrypt.genSaltAsync(SALT_WORK_FACTOR)
+             .then((salt)=> {
+               return bcrypt.hashAsync(user.password, salt, null);
+             })
+             .then((hash)=> {
+               user.password = hash;
+               return done(null,user);
+             })
+             .catch(console.error);
+  });
   return User;
 };

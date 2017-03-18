@@ -6,12 +6,13 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var passport = require('passport');
 var passportConfig = require('./config/passport');
-var application = require("./routes/application");
 var http= require('http');
 var session = require('express-session')
 
 var index = require('./routes/index');
 var users = require('./routes/users');
+var sessions = require('./routes/sessions');
+// var application = require("./routes/application");
 SALT_WORK_FACTOR = 12;
 var app = express();
 
@@ -46,6 +47,8 @@ app.use('/', index);
 
 
 app.use('/users', users);
+// app.use('/application', application);
+app.use('/sessions', sessions);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

@@ -1,6 +1,6 @@
 var passport = require('passport')
-  , LocalStrategy = require('passport-local').Strategy
-  , db = require('../models')
+  , { Strategy:LocalStrategy } = require('passport-local')
+  , db = require('../models/index')
 
 // Serialize Sessions
 passport.serializeUser(function(user, done){
@@ -9,9 +9,9 @@ passport.serializeUser(function(user, done){
 
 //Deserialize Sessions
 passport.deserializeUser(function(user, done){
-	db.User.find({where: {id: user.id}}).success(function(user){
+	db.User.find({where: {id: user.id}}).then(function(user){
 		done(null, user);
-	}).error(function(err){
+	}).catch(function(err){
 		done(err, null)
 	});
 });
@@ -19,9 +19,23 @@ passport.deserializeUser(function(user, done){
 // For Authentication Purposes
 passport.use(new LocalStrategy(
 	function(username, password, done){
-		db.User.find({where: {username: username}}).success(function(user){
-			passwd = user ? user.password : ''
-			isMatch = db.User.validPassword(password, passwd, done, user)
-		});
+    console.log('before find')
+		db.User.findOne({where: {email: username}})
+      .then((user) => {
+        if(!user) return done(null, false);
+        console.log(user)
+        return Promise.all([user,db.User.validPassword(password, user.password)])
+      })
+      .then(([user,isMatch]) => {
+        console.log(isMatch)
+          if (!isMatch) {
+            return done(null, false)
+          } else {
+            return done(null,user)
+          }
+        })
+      .catch((err)=> {return done(err);})
 	}
 ));
+
+module.exports = passport

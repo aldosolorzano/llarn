@@ -19,12 +19,12 @@ app.set('port', port);
 /**
  * Create HTTP server.
  */
-db.User.find({where: {email:'admin'}}).then(function(user){
+db.User.find({where: {email:'llarn'}}).then(function(user){
   if(!user){
     console.log('llarn')
-    db.User.build({email:'admin',password:'admin'}).save();
+    db.User.create({email:'llarn',password:'admin'})
   }
-}).catch(console.log)
+})
 
  var server = http.createServer(app);
  server.listen(port);
